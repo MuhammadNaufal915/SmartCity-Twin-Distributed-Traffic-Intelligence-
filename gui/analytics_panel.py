@@ -9,7 +9,7 @@ from typing import Optional
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QFrame, QGridLayout, QProgressBar,
+    QFrame, QGridLayout, QProgressBar, QScrollArea
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor
@@ -64,7 +64,17 @@ class AnalyticsPanel(QWidget):
         super().__init__(parent)
         self.setMinimumWidth(280)
 
-        main_layout = QVBoxLayout(self)
+        top_layout = QVBoxLayout(self)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background: transparent; } QWidget#scrollContent { background: transparent; }")
+
+        content = QWidget()
+        content.setObjectName("scrollContent")
+        main_layout = QVBoxLayout(content)
         main_layout.setSpacing(6)
         main_layout.setContentsMargins(4, 4, 4, 4)
 
@@ -186,6 +196,9 @@ class AnalyticsPanel(QWidget):
 
         main_layout.addWidget(parallel_group)
         main_layout.addStretch()
+
+        scroll.setWidget(content)
+        top_layout.addWidget(scroll)
 
     def update_metrics(self, metrics: dict) -> None:
         """Update metrics values and progress bars from dictionary."""

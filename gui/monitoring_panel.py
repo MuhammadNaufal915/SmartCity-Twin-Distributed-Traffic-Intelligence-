@@ -241,7 +241,17 @@ class MonitoringPanel(QWidget):
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
 
-        layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background: transparent; } QWidget#scrollContent { background: transparent; }")
+        
+        content = QWidget()
+        content.setObjectName("scrollContent")
+        layout = QVBoxLayout(content)
         layout.setSpacing(6)
         layout.setContentsMargins(4, 4, 4, 4)
 
@@ -259,6 +269,9 @@ class MonitoringPanel(QWidget):
             layout.addWidget(card)
 
         layout.addStretch()
+        
+        scroll.setWidget(content)
+        main_layout.addWidget(scroll)
 
     def update_node(
         self,
