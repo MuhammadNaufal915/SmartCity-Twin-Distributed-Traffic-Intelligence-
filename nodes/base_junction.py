@@ -104,7 +104,8 @@ class JunctionMCU(Process):
         )
         
         self._cycle_start_time = time.time()
-        self._light_cycle_start = time.time()
+        # Berikan offset awal acak agar siklus lampu tidak sinkron bersamaan (lebih realistis)
+        self._light_cycle_start = time.time() - random.uniform(0, 15)
         self._last_generation_time = time.time()
         self._last_report_time = time.time()
 
