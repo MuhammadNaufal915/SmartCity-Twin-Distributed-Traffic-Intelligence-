@@ -10,7 +10,7 @@ from typing import Optional
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QComboBox, QLabel, QFrame, QSplitter,
+    QPushButton, QComboBox, QLabel, QFrame, QSplitter, QTabWidget
 )
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QIcon, QColor
@@ -21,6 +21,7 @@ from gui.monitoring_panel import MonitoringPanel
 from gui.network_panel import NetworkPanel
 from gui.analytics_panel import AnalyticsPanel
 from gui.log_panel import LogPanel
+from gui.traffic_chart import TrafficChartWidget
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class MainWindow(QMainWindow):
 
         # State
         self._last_msg_bus_count: int = 0
+        self._tick_counter: int = 0
 
         # Stylesheet (Modern Dark Mode)
         self.setStyleSheet("""
@@ -121,9 +123,21 @@ class MainWindow(QMainWindow):
         top_layout.addWidget(h_splitter)
         v_splitter.addWidget(top_widget)
 
-        # Bottom half (Log console)
+        # Bottom half (Tabs for Logs and Traffic History)
+        self.bottom_tabs = QTabWidget()
+        self.bottom_tabs.setStyleSheet("""
+            QTabWidget::pane { border: 1px solid #20203a; background: #0b0b14; }
+            QTabBar::tab { background: #1a1a2e; color: #8888aa; padding: 6px 12px; border: 1px solid #20203a; border-bottom: none; border-top-left-radius: 4px; border-top-right-radius: 4px; }
+            QTabBar::tab:selected { background: #2a2a4a; color: #ffffff; font-weight: bold; }
+        """)
+        
         self.log_panel = LogPanel()
-        v_splitter.addWidget(self.log_panel)
+        self.traffic_chart = TrafficChartWidget(max_history=100)
+        
+        self.bottom_tabs.addTab(self.log_panel, "📋 Log Console")
+        self.bottom_tabs.addTab(self.traffic_chart, "📈 Traffic History")
+        
+        v_splitter.addWidget(self.bottom_tabs)
 
         # Set sizes for vertical split: Top Dashboard=650, Logs=200
         v_splitter.setSizes([650, 200])
@@ -431,7 +445,9 @@ class MainWindow(QMainWindow):
         self.city_map.reset_map()
         # Clear local state
         self._last_msg_bus_count = 0
+        self._tick_counter = 0
         self.log_panel.clear_logs()
+        self.traffic_chart.reset_data()
         self._add_log_local("INFO", "Simulation reset requested. All MCU processes halted.")
         self._update_control_states()
 
@@ -464,6 +480,16 @@ class MainWindow(QMainWindow):
 
         # Update sub-widgets with latest statuses
         statuses = self.controller.get_all_status()
+        
+        # Track vehicle counts for the chart (sample every 10 ticks = 500ms)
+        self._tick_counter += 1
+        if self._tick_counter >= 10:
+            self._tick_counter = 0
+            chart_data = {
+                node_id: status.vehicle_count for node_id, status in statuses.items()
+            }
+            self.traffic_chart.add_data(chart_data)
+
         for node_id, status in statuses.items():
             # 1. Update City Map
             self.city_map.update_junction(
