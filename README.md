@@ -50,6 +50,13 @@ Setiap proses persimpangan menerapkan pola eksekusi *Superloop* yang umum pada s
 * Menghitung perubahan *state machine* lokal (siklus lampu lalu lintas).
 * Mengubah output aktuator virtual (fase lampu lalu lintas) dan mengirimkan data telemetri ke pusat.
 
+### 4. Migrasi Agen Terdistribusi (Distributed Agent Migration)
+Kendaraan di dalam simulasi tidak dikelola secara terpusat oleh memori global. Ketika sebuah kendaraan mencapai batas akhir jalan di suatu persimpangan:
+* Proses persimpangan asal akan menserialisasikan status kendaraan tersebut.
+* Status kendaraan dikirimkan ke persimpangan tujuan melalui pesan `VEHICLE_TRANSFER` lewat antrean IPC.
+* Proses persimpangan tujuan mendeserialisasi pesan tersebut, mengambil alih kendali, dan melanjutkan simulasi perjalanan kendaraan tersebut di areanya.
+Ini memodelkan bagaimana agen/objek bermigrasi secara dinamis di antara simpul pemrosesan terdistribusi yang mandiri.
+
 ---
 
 ## 🏗️ Arsitektur Sistem
